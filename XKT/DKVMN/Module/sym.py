@@ -15,7 +15,7 @@ from mxnet import nd, autograd
 from sklearn.metrics import roc_auc_score
 from tqdm import tqdm
 
-from XKT.shared import SLMLoss
+from XKT.shared import LMLoss
 
 # set parameters
 try:
@@ -32,14 +32,25 @@ except (ImportError, SystemError):
 __all__ = ["get_net", "net_viz", "fit_f", "BP_LOSS_F", "eval_f"]
 
 
-def get_net(ku_num, hidden_num, nettype="DKT", dropout=0.0, **kwargs):
-    if nettype in {"EmbedDKT", "DKT"}:
-        return DKTNet(ku_num, hidden_num, nettype, dropout, **kwargs)
-    else:
-        raise TypeError("Unknown nettype: %s" % nettype)
+def get_net(ku_num, key_embedding_dim, value_embedding_dim, hidden_num,
+            key_memory_size, key_memory_state_dim, value_memory_size, value_memory_state_dim,
+            nettype="DKVMN", dropout=0.0, **kwargs):
+    return DKVMN(
+        ku_num=ku_num,
+        key_embedding_dim=key_embedding_dim,
+        value_embedding_dim=value_embedding_dim,
+        hidden_num=hidden_num,
+        key_memory_size=key_memory_size,
+        key_memory_state_dim=key_memory_state_dim,
+        value_memory_size=value_memory_size,
+        value_memory_state_dim=value_memory_state_dim,
+        nettype=nettype,
+        dropout=dropout,
+        **kwargs
+    )
 
 
-class Loss(SLMLoss):
+class Loss(LMLoss):
     pass
 
 
@@ -59,9 +70,13 @@ def net_viz(_net, _cfg, view_tag=False, **kwargs):
 
         viz_net = deepcopy(_net)
         viz_net.length = 2
-        viz_shape = {'data': (batch_size,) + (2,)}
-        x = mx.sym.var("data")
-        sym = viz_net(x)[1][-1]
+        viz_shape = {
+            'q': (batch_size,) + (2,),
+            "r": (batch_size,) + (2,),
+        }
+        q = mx.sym.var("q")
+        r = mx.sym.var("r")
+        sym = viz_net(q, r)[0]
         plot_network(
             nn_symbol=sym,
             save_path=viz_dir,
@@ -93,11 +108,11 @@ def get_data_iter(_cfg, ku_num):
 
 
 def fit_f(_net, _data, bp_loss_f, loss_function, loss_monitor):
-    data, data_mask, label, pick_index, label_mask = _data
-    output, _ = _net(data, data_mask)
+    keys, values, data_mask, label, label_mask = _data
+    output, _ = _net(keys, values, mask=data_mask)
     bp_loss = None
     for name, func in loss_function.items():
-        loss = func(output, pick_index, label, label_mask)
+        loss = func(output, label, label_mask)
         if name in bp_loss_f:
             bp_loss = loss
         loss_value = nd.mean(loss).asscalar()
@@ -118,10 +133,8 @@ def eval_f(_net, test_data, ctx=mx.cpu()):
             ctx, *batch_data,
             even_split=False
         )
-        for (data, data_mask, label, pick_index, label_mask) in ctx_data:
-            output, _ = _net(data, data_mask)
-            output = mx.nd.slice(output, (None, None), (None, -1))
-            output = mx.nd.pick(output, pick_index)
+        for (keys, values, data_mask, label, label_mask) in ctx_data:
+            output, _ = _net(keys, values, mask=data_mask)
             pred = output.asnumpy().tolist()
             label = label.asnumpy().tolist()
             for i, length in enumerate(label_mask.asnumpy().tolist()):
@@ -134,7 +147,7 @@ def eval_f(_net, test_data, ctx=mx.cpu()):
     }
 
 
-BP_LOSS_F = Loss
+BP_LOSS_F = {"LMLoss": Loss()}
 
 
 def numerical_check(_net, _cfg, ku_num):
@@ -142,7 +155,7 @@ def numerical_check(_net, _cfg, ku_num):
 
     datas = get_data_iter(_cfg, ku_num)
 
-    bp_loss_f = {"SLMLoss": BP_LOSS_F(lw1=0.003)}
+    bp_loss_f = BP_LOSS_F
     loss_function = {}
     loss_function.update(bp_loss_f)
     from longling.ML.toolkit.monitor import MovingLoss
@@ -176,7 +189,16 @@ if __name__ == '__main__':
     cfg = Configuration(dataset="junyi")
 
     # generate sym
-    net = get_net(835, 900)
+    net = get_net(
+        ku_num=835,
+        key_embedding_dim=50,
+        value_embedding_dim=200,
+        hidden_num=900,
+        key_memory_size=20,
+        value_memory_size=20,
+        key_memory_state_dim=50,
+        value_memory_state_dim=200,
+    )
 
     # # visualiztion check
     # net_viz(net, cfg, False)

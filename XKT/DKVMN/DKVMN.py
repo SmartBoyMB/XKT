@@ -10,7 +10,7 @@ except (SystemError, ModuleNotFoundError):
     from Module import *
 
 
-class DKT(object):
+class DKVMN(object):
     def __init__(
             self, load_epoch=None, cfg=None, toolbox_init=False, **kwargs
     ):
@@ -107,7 +107,7 @@ class DKT(object):
         net_viz(net, mod.cfg)
 
     def set_loss(self, bp_loss_f=None, loss_function=None):
-        bp_loss_f = {"SLMLoss": BP_LOSS_F(**self.mod.cfg.loss_params)} if bp_loss_f is None else bp_loss_f
+        bp_loss_f = BP_LOSS_F if bp_loss_f is None else bp_loss_f
 
         assert bp_loss_f is not None and len(bp_loss_f) == 1
 
@@ -343,7 +343,7 @@ class DKT(object):
 
     @staticmethod
     def train(tf, vf, cfg=None, **kwargs):
-        module = DKT(cfg=cfg, **kwargs)
+        module = DKVMN(cfg=cfg, **kwargs)
         module.set_loss()
         # module.viz()
 
@@ -356,7 +356,7 @@ class DKT(object):
     def test(test_epoch, dump_file=None, **kwargs):
         from longling.ML.toolkit.formatter import EvalFormatter
         formatter = EvalFormatter(dump_file=dump_file)
-        module = DKT.load(test_epoch, **kwargs)
+        module = DKVMN.load(test_epoch, **kwargs)
 
         test_data = module.etl("test")
         eval_result = module.mod.eval(module.net, test_data)
@@ -369,7 +369,7 @@ class DKT(object):
     @staticmethod
     def inc_train(init_model_file, validation_logger_mode="w", **kwargs):
         # 增量学习，从某一轮参数继续训练
-        module = DKT(**kwargs)
+        module = DKVMN(**kwargs)
         module.toolbox_init(validation_logger_mode=validation_logger_mode)
         module.model_init(init_model_file=init_model_file)
 
@@ -378,11 +378,11 @@ class DKT(object):
 
     @staticmethod
     def dump_configuration(**kwargs):
-        DKT.get_module(**kwargs)
+        DKVMN.get_module(**kwargs)
 
     @staticmethod
     def load(load_epoch=None, **kwargs):
-        module = DKT(**kwargs)
+        module = DKVMN(**kwargs)
         load_epoch = module.mod.cfg.end_epoch if load_epoch is None \
             else load_epoch
         module.model_init(load_epoch, **kwargs)
@@ -391,11 +391,11 @@ class DKT(object):
     @staticmethod
     def run(parse_args=None):
         cfg_parser = ConfigurationParser(Configuration)
-        cfg_parser.add_subcommand(cfg_parser.func_spec(DKT.config))
-        cfg_parser.add_subcommand(cfg_parser.func_spec(DKT.inc_train))
-        cfg_parser.add_subcommand(cfg_parser.func_spec(DKT.train))
-        cfg_parser.add_subcommand(cfg_parser.func_spec(DKT.test))
-        cfg_parser.add_subcommand(cfg_parser.func_spec(DKT.load))
+        cfg_parser.add_subcommand(cfg_parser.func_spec(DKVMN.config))
+        cfg_parser.add_subcommand(cfg_parser.func_spec(DKVMN.inc_train))
+        cfg_parser.add_subcommand(cfg_parser.func_spec(DKVMN.train))
+        cfg_parser.add_subcommand(cfg_parser.func_spec(DKVMN.test))
+        cfg_parser.add_subcommand(cfg_parser.func_spec(DKVMN.load))
         if parse_args is not None:
             if isinstance(parse_args, str):
                 cfg_kwargs = cfg_parser.parse(cfg_parser.parse_args(parse_args.split(" ")))
@@ -408,19 +408,8 @@ class DKT(object):
         del cfg_kwargs["subcommand"]
 
         print(cfg_kwargs)
-        eval("%s.%s" % (DKT.__name__, subcommand))(**cfg_kwargs)
+        eval("%s.%s" % (DKVMN.__name__, subcommand))(**cfg_kwargs)
 
 
 if __name__ == '__main__':
-    DKT.run()
-    # DKT.run(
-    #     [
-    #         "train", "../../data/junyi/data/train", "../../data/junyi/data/test",
-    #         "--workspace",  "EmbedDKT+",
-    #         "--hyper_params",
-    #         "nettype=EmbedDKT;ku_num=int(835);hidden_num=int(300);latent_dim=int(100);dropout=float(0.0)",
-    #         "--loss_params", "lw2=float(1e-100)",
-    #         "--dataset",  "junyi",
-    #         "--ctx", "cpu(1)"
-    #     ]
-    # )
+    DKVMN.run()
