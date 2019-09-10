@@ -7,14 +7,11 @@ from __future__ import print_function
 import datetime
 import pathlib
 
-from mxnet import cpu, gpu
-
 import longling.ML.MxnetHelper.glue.parser as parser
 from longling.ML.MxnetHelper.glue.parser import path_append, var2exp, eval_var
-from longling.ML.MxnetHelper.toolkit.optimizer_cfg import get_optimizer_cfg, \
-    get_update_steps
 from longling.ML.MxnetHelper.toolkit.select_exp import all_params as _select
 from longling.lib.utilog import config_logging, LogLevel
+from mxnet import cpu
 
 
 class Configuration(parser.Configuration):
@@ -70,7 +67,9 @@ class Configuration(parser.Configuration):
     # 超参数
     hyper_params = {
     }
+    loss_params = {
 
+    }
     # 说明
     caption = ""
 
@@ -101,7 +100,7 @@ class Configuration(parser.Configuration):
 
         params = self.class_var
         if params_json:
-            params.update(self.load_cfg(cfg_path=params_json))
+            params.update(self.load_cfg(params_json=params_json))
         params.update(**kwargs)
 
         for param, value in params.items():
@@ -150,6 +149,12 @@ class Configuration(parser.Configuration):
     @staticmethod
     def load(cfg_path, **kwargs):
         return Configuration(Configuration.load_cfg(cfg_path, **kwargs))
+
+    def var2val(self, var):
+        return eval(var2exp(
+            var,
+            env_wrap=lambda x: "self.%s" % x
+        ))
 
 
 class ConfigurationParser(parser.ConfigurationParser):
