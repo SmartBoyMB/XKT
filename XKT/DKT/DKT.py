@@ -418,16 +418,20 @@ class DKT(object):
         eval("%s.%s" % (DKT.__name__, subcommand))(**cfg_kwargs)
 
 
+def main():
+    DKT.run()
+
+
 if __name__ == '__main__':
-    # DKT.run()
-    DKT.run(
-        [
-            "train", "$data_dir/train", "$data_dir/test",
-            "--workspace", "DKT",
-            "--hyper_params",
-            "nettype=DKT;ku_num=int(835);hidden_num=int(300);latent_dim=int(100);dropout=float(0.0)",
-            "--loss_params", "lw2=float(1e-100)",
-            "--dataset", "junyi",
-            "--ctx", "cpu(0)"
-        ]
-    )
+    DKT.run()
+    # DKT.run(
+    #     [
+    #         "train", "$data_dir/train", "$data_dir/test",
+    #         "--workspace", "DKT",
+    #         "--hyper_params",
+    #         "nettype=DKT;ku_num=int(835);hidden_num=int(300);latent_dim=int(100);dropout=float(0.0)",
+    #         "--loss_params", "lw2=float(1e-100)",
+    #         "--dataset", "junyi",
+    #         "--ctx", "cpu(0)"
+    #     ]
+    # )
