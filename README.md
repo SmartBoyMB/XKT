@@ -1,8 +1,11 @@
 # XKT
+
+[![PyPI](https://img.shields.io/pypi/v/XKT.svg)](https://pypi.python.org/pypi/XKT)
 [![Build Status](https://www.travis-ci.org/tswsxk/XKT.svg?branch=master)](https://www.travis-ci.org/tswsxk/XKT)
 [![codecov](https://codecov.io/gh/tswsxk/XKT/branch/master/graph/badge.svg)](https://codecov.io/gh/tswsxk/XKT)
 
 Multiple Knowledge Tracing models implemented by mxnet-gluon. 
+Mirror version of pytorch can be found [here](https://github.com/bigdata-ustc/TKT)
 For convenient dataset downloading and preprocessing of knowledge tracing task, 
 visit [Edudata](https://github.com/bigdata-ustc/EduData) for handy api.
 
@@ -65,6 +68,7 @@ The DKT+ sometimes meet `NaN` problem which may resulted by the `mxnet` problem.
 ValueError: Input contains NaN, infinity or a value too large for dtype('float64').
 ```
 
+PS. if you think those problems are so easy to solve, please do not hesitate to contact us :-).
 
 ## Tutorial
 
