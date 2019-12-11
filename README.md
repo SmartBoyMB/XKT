@@ -15,10 +15,10 @@ With [`EduData`](https://pypi.python.org/pypi/EduData), we test the models perfo
 |model name  | synthetic | assistment_2009_2010 | junyi |
 | ---------- | - |------------------ | ----- |
 | DKT        | 0.87188805322963 | 0.8342923397670765 |0.7410560567638328|
-| DKT+       | || |
-| EmbedDKT   | **0.8737522637057311** |       0.8320344321721882            |0.8964732397335631|
-| EmbedDKT+ |  |  ||
-| DKVMN      | 0.8718044211997655     | **0.8420074256820345** | |
+| DKT+       | 0.869383618973861 |NaN| NaN |
+| EmbedDKT   | **0.8737522637057311** |       0.8320344321721882            |**0.8964732397335631**|
+| EmbedDKT+ | 0.8726981813026308 | NaN |NaN|
+| DKVMN      | 0.8718044211997655     | **0.8420074256820345** | 0.8917019246036442 |
 
 
 The f1 scores are listed as follows:
@@ -26,10 +26,10 @@ The f1 scores are listed as follows:
 |model name  | synthetic | assistment_2009_2010 | junyi |
 | ---------- | ------------------ | ----- | ----- |
 | DKT        | 0.7777607801805209 | **0.7243637771478697** |0.6776867871487828|
-| DKT+       | | | |
-| EmbedDKT   | **0.7793557673356585** |        0.7175906464749389           |0.8251094941054025|
-| EmbedDKT+   |                   |                   ||
-| DKVMN      | 0.7753258655479229 | 0.7169883125521318 | |
+| DKT+       | 0.7755420680146433 | NaN | NaN |
+| EmbedDKT   | **0.7793557673356585** |        0.7175906464749389           |**0.8251094941054025**|
+| EmbedDKT+   | 0.7788504496202276 | NaN |NaN|
+| DKVMN      | 0.7753258655479229 | 0.7169883125521318 | 0.8173835510540102 |
 
 The information of the benchmark datasets can be found in EduData docs.
 
@@ -49,6 +49,12 @@ The number after `-` in the first row indicates the knowledge units number in th
 pip install EduData
 edudata download ktbd
 ```
+
+### Trick
+
+* DKT: `hidden_num` is usually set to the nearest hundred number to the `ku_num`
+* EmbedDKT: `latent_dim` is usually set to a value litter than or equal to `\sqrt(hidden_num * ku_num)`
+* DKVMN: `key_embedding_dim = key_memory_state_dim` and `value_embedding_dim = value_memory_state_dim`
 
 ## Notice
 
@@ -150,7 +156,7 @@ Refer to the [glue documentation(TBA)] for detailed usage.
 # DKT
 python3 DKT.py train \$data_dir/train.json \$data_dir/test.json --hyper_params "nettype=EmbedDKT;ku_num=int(835);hidden_num=int(900);latent_dim=int(600);dropout=float(0.5)" --ctx="gpu(0)" --model_name DKT --root=$HOME/XKT --root_data_dir=\$root/data/ktbd/\$dataset --data_dir=\$root_data_dir --dataset=junyi
 # DKT+
-python3 DKT.py train \$data_dir/train.json \$data_dir/test.json --hyper_params "nettype=EmbedDKT;ku_num=int(835);hidden_num=int(900);latent_dim=int(600);dropout=float(0.5)" --loss_params "lr=float(0.1);lw1=float(0.003);lw2=float(3.0)" --ctx="gpu(0)" --model_name DKT+ --root=$HOME/XKT --root_data_dir=\$root/data/ktbd/\$dataset --data_dir=\$root_data_dir --dataset=junyi
+python3 DKT.py train \$data_dir/train.json \$data_dir/test.json --hyper_params "nettype=DKT;ku_num=int(835);hidden_dim=int(600);dropout=float(0.5)" --loss_params "lr=float(0.1);lw1=float(0.003);lw2=float(3.0)" --ctx="gpu(0)" --model_name DKT+ --root=$HOME/XKT --root_data_dir=\$root/data/ktbd/\$dataset --data_dir=\$root_data_dir --dataset=junyi
 ```
 
 
