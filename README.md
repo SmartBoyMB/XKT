@@ -5,7 +5,7 @@
 [![codecov](https://codecov.io/gh/tswsxk/XKT/branch/master/graph/badge.svg)](https://codecov.io/gh/tswsxk/XKT)
 
 Multiple Knowledge Tracing models implemented by mxnet-gluon. 
-Mirror version of pytorch can be found [here](https://github.com/bigdata-ustc/TKT)
+Mirror version of pytorch can be found [here](https://github.com/bigdata-ustc/TKT).
 For convenient dataset downloading and preprocessing of knowledge tracing task, 
 visit [Edudata](https://github.com/bigdata-ustc/EduData) for handy api.
 
@@ -79,25 +79,8 @@ PS. if you think those problems are so easy to solve, please do not hesitate to 
     1. `pip install -e .` to install the package, or
     2. `export PYTHONPATH=$PYTHONPATH:~/XKT`
     
-### Preliminary
-As an example, suppose you create the project under your own `home` directory 
-and create a `data` directory to store the data (like `train` and `test`) and model.
-The toc of the project is looked like as follows:
 
-```text
-└── XKT/                            <- root
-    ├── data/
-    │   └── dataset/                <- data_dir
-    │        ├── workspace/         <- workspace, the model file like parameters file will be stored here
-    │        ├── train
-    │        └── test
-    ├── ...
-    └── XKT/
-```
-Certainly, the structure is not a strict limitation, you can also specify the `data` position as you want. 
-Here is just a toy example :-).  
-
-#### Data Format
+### Data Format
 In `XKT`, all sequence is store in `json` format, such as:
 ```json
 [[419, 1], [419, 1], [419, 1], [665, 0], [665, 0]]
@@ -124,23 +107,24 @@ def extract(data_src):
 
     return responses
 ```
-The above program can be found in `XKT/XKT/shared/etl.py`
+The above program can be found in `XKT/XKT/shared/etl.py`. 
 
-##### Convert other format into json sequence
-There is another common-seen format in KT task:
+To deal with the issue that the dataset is store in `tl` format:
+
 ```text
 5
 419,419,419,665,665
 1,1,1,0,0
 ```
-By using the cli tools from `EduData`, we can quickly convert the data in the above-mentioned format into json sequence.
-```shell
-# convert tl sequence to json sequence
-edudata tl2json $src $tar
-```
-Refer to [Edudata Documentation](https://github.com/bigdata-ustc/EduData) for installation and usage tutorial.
+
+Refer to [Edudata Documentation](https://github.com/bigdata-ustc/EduData#format-converter).
+
+### CLI
 
 #### General Command Format
+
+---
+
 All command to invoke the model has the same cli canonical form:
 ```shell
 python Model.py $subcommand $parameters1 $parameters2 ...
@@ -153,14 +137,66 @@ python Model.py $subcommand --help
 
 The cli tools is constructed based on 
 [longling ConfigurationParser](https://longling.readthedocs.io/zh/latest/submodule/lib/index.html#module-longling.lib.parser). 
-Refer to the [glue documentation(TBA)] for detailed usage.
+
+#### Demo
+
+---
+
+As an example, suppose you create the project under your own `home` directory 
+and create a `data` directory to store the data (like `train` and `test`) and model. 
+Assume that you are going to test the models on [ktbd](http://base.ustc.edu.cn/data/ktbd/) dataset, 
+and the toc of the project is looked like as follows:
+
+```text
+└── XKT/                            
+    ├── data/
+    │   └── ktbd/                
+    │        ├── junyi/             <-- dataset
+    │        │   ├── train.json
+    │        │   └── test.json
+    │        ├── ...
+    │        └── synthetic/
+    ├── ...
+    └── XKT/
+```
+
+And in each dataset, `train.json` is the training dataset, and `test.json` is the test dataset, 
+we want the model is placed under the corresponding dataset directory,
+where a `model` directory is created to store the all models. Thus, we use the following command to train the model
+
+```shell
+# basic
+python3 DKT.py train $HOME/XKT/data/ktbd/junyi/train.json $HOME/XKT/data/ktbd/junyi/test.json --hyper_params "nettype=EmbedDKT;ku_num=int(835);hidden_num=int(900);dropout=float(0.5)" --ctx="gpu(0)" --model_dir $HOME/XKT/data/ktbd/junyi/model/DKT 
+# advanced path configuration
+python3 DKT.py train \$data_dir/train.json \$data_dir/test.json --hyper_params "nettype=EmbedDKT;ku_num=int(835);hidden_num=int(900);dropout=float(0.5)" --ctx="gpu(0)" --model_name DKT --root=$HOME/XKT --root_data_dir=\$root/data/ktbd/\$dataset --data_dir=\$root_data_dir --dataset=junyi
+```
+And we can get something like that:
+```text
+junyi/
+├── model/
+│   └── DKT/
+│       ├── configuration.json
+│       ├── DKT-0001.parmas
+│       ├── DKT-0002.parmas
+│       ├── ...
+│       ├── DKT-0020.parmas
+│       ├── result.json
+│       └── result.log
+├── test.json
+└── train.json
+```
+The two command mentioned above are equally the same. 
+About how to use the advanced path configuration, 
+refer to [longling doc](https://longling.readthedocs.io/zh/latest/submodule/ML/index.html#configuration).
+
+---
 
 ### DKT
 ```shell
 # DKT
-python3 DKT.py train \$data_dir/train.json \$data_dir/test.json --hyper_params "nettype=EmbedDKT;ku_num=int(835);hidden_num=int(900);latent_dim=int(600);dropout=float(0.5)" --ctx="gpu(0)" --model_name DKT --root=$HOME/XKT --root_data_dir=\$root/data/ktbd/\$dataset --data_dir=\$root_data_dir --dataset=junyi
+python3 DKT.py train \$data_dir/train.json \$data_dir/test.json --hyper_params "nettype=EmbedDKT;ku_num=int(835);hidden_num=int(900);dropout=float(0.5)" --ctx="gpu(0)" --model_name DKT --root=$HOME/XKT --root_data_dir=\$root/data/ktbd/\$dataset --data_dir=\$root_data_dir --dataset=junyi
 # DKT+
-python3 DKT.py train \$data_dir/train.json \$data_dir/test.json --hyper_params "nettype=DKT;ku_num=int(835);hidden_dim=int(600);dropout=float(0.5)" --loss_params "lr=float(0.1);lw1=float(0.003);lw2=float(3.0)" --ctx="gpu(0)" --model_name DKT+ --root=$HOME/XKT --root_data_dir=\$root/data/ktbd/\$dataset --data_dir=\$root_data_dir --dataset=junyi
+python3 DKT.py train \$data_dir/train.json \$data_dir/test.json --hyper_params "nettype=DKT;ku_num=int(835);hidden_num=int(900);dropout=float(0.5)" --loss_params "lr=float(0.1);lw1=float(0.003);lw2=float(3.0)" --ctx="gpu(0)" --model_name DKT+ --root=$HOME/XKT --root_data_dir=\$root/data/ktbd/\$dataset --data_dir=\$root_data_dir --dataset=junyi
 ```
 
 
@@ -194,18 +230,6 @@ the following are the url of those implemented by python (the stared is the auth
 * EKT[[pytorch*]](https://github.com/bigdata-ustc/ekt)
 
 ### Dataset
-There are some datasets which are suitable for this task, and the followings are the url:
-
-* [KDD Cup 2010](https://pslcdatashop.web.cmu.edu/KDDCup/downloads.jsp)
-
-* [ASSISTments](https://sites.google.com/site/assistmentsdata/)
-
-* [OLI Engineering Statics 2011](https://pslcdatashop.web.cmu.edu/DatasetInfo?datasetId=507)
-
-* [JunyiAcademy Math Practicing Log](https://pslcdatashop.web.cmu.edu/DatasetInfo?datasetId=1198)
-
-* [slepemapy.cz](https://www.fi.muni.cz/adaptivelearning/?a=data)
-
-* [synthetic](https://github.com/chrispiech/DeepKnowledgeTracing/tree/master/data/synthetic)
-
-For Latest collection, you can refer to [BaseData](http://base.ustc.edu.cn/data/) 
+There are some datasets which are suitable for this task, 
+you can refer to [BaseData ktbd doc](https://github.com/bigdata-ustc/EduData/blob/master/docs/ktbd.md) 
+for these datasets 
